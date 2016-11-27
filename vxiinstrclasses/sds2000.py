@@ -11,7 +11,7 @@ class sds2000(instrument):
             raise InstrumentError("Instrument Manufacturer/Model Number Mismatch, "+iid)
 
 
-    def set_timediv(self, val=1E-3):
+    def set_time_perdiv(self, val=1E-3):
         """Sets the time per division"""
         if (val <= 1.0E-9):
             timediv = '1.0NS'
@@ -87,7 +87,7 @@ class sds2000(instrument):
 
         self._write(command)
 
-    def set_voltdiv(self, chan=1, val=2):
+    def set_channel_volts_perdiv(self, val=2, chan=1):
         """Sets the volts per division on a specific channel"""
         if (val  <= 1.0E-3):
             voltDiv = '1MV'
@@ -121,27 +121,92 @@ class sds2000(instrument):
 
         self._write(command)
 
-    def set_trigmode(self, mode="auto"):
+    def set_channel_invert(self, invert=False, math=False, chan=1):
+        "Set the channel or math pseudo channel invert true or false"
+        state = "OFF"
+        if(invert == True):
+            state = "ON"
+        if(math == True):
+            self._write("MATH:INVS {state}".format(state=state))
+        else:
+            self._write("C{chan}:INVS {state}".format(chan=chan, state=state))
+
+
+
+
+    def set_channel_probe_atten(self, atten=10, chan=1):
+        """ Set the probe attenuation"""
+        #Broken: Bug in Siglent firmware. Can only set 0.1, 0.2, 0,5, 1,2,5 and 10 yet others selectable from scope UI.
+        if atten not in [0.1,0.2,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000,10000]:
+            return
+        self._write("C{chan}:ATTN {atten}".format(chan=chan, atten=atten))
+
+
+    def set_channel_coupling(self, coupling="dc", fiftyohms=False, chan=1):
+        "Set channel coupling"
+
+        #Determine coupling letter
+        acl = "D"
+        if(coupling.upper() == "AC"):
+            acl = "A"
+        elif(coupling.upper() == "DC"):
+            pass
+        elif(coupling.upper() == "GND"):
+            # If GND is specified, then forget about sending the channel impedance
+            self._write("C{chan}:CPL GND".format(chan=chan))
+            return
+        else:
+            return
+
+        # Determine impedance code
+        z = "1M"
+        if(fiftyohms == True):
+            z = "50"
+
+        self._write("C{chan}:CPL {acl}{z}".format(chan=chan, acl=acl, z=z ))
+
+    def set_channel_bandwidth_limit(self, state=False, chan=1):
+        "Set the bandwidth limit. The sds2000 only supports on and off"
+        bwl = "OFF"
+        if(state == True):
+            bwl = "ON"
+
+        self._write("BWL C{chan},{bwl}".format(chan=chan, bwl=bwl))
+
+    def set_channel_skew(self, nanoseconds = 0, chan = 1):
+        "Set the skew of a channel"
+
+        #broken. SDS2000 recognizes the command, but does not update UI
+        self._write("C{chan}:SKEW {nanoseconds}NS".format(chan=chan, nanoseconds= nanoseconds))
+
+    def set_channel_units(self, units="V", chan=1):
+        """ Set the units per vertical division (V or A)"""
+        if(units == 'V' or units == 'A'):
+            self._write("C{chan}:UNIT {units}".format(chan=chan, units=units))
+
+
+    def set_trigger_mode(self, mode="auto"):
         """Set trigger mode: auto, norm, single, stop"""
         command = 'TRMD' + ' ' + mode.upper()
         self._write(command)
 
 
-    def set_trigslope(self, slope, chan=1):
+    def set_trigger_slope(self, slope, chan=1):
         """Set the trigger slope"""
         command = 'C%s:TRSL %s' % (chan, slope.upper())
         self._write(command)
 
 
-    def get_triglevel(self):
+
+    def get_trigger_level(self):
         """Return the channel and trigger level"""
-        "Broken: Bug in siglent firmware. Returns values an order of magnitude off"
+        #Broken: Bug in siglent firmware. Returns values an order of magnitude off
         res = self._ask("TRLV?")
         res = res[:-2]
         print(res)
         return {'channel':int(res[1]), 'level':float(res[8:])}
 
-    def set_triglevel(self, level=0.5E+00, chan=1):
+    def set_trigger_level(self, level=0.5E+00, chan=1):
         """Set the trigger level in volts"""
         command= 'C%s:TRLV %1.3fV' % (chan, level)
         self._write(command)
@@ -158,13 +223,18 @@ class sds2000(instrument):
 
 if __name__ == "__main__":
     scope = sds2000("sds2000")
+    scope.debug(True)
     #print(scope.identify())
-    #scope.set_triglevel(2.0)
-    print(scope.get_triglevel())
-    #scope.set_timediv(10E-3)
-    #scope.waveform()
     #scope.console()
-    res = scope.save_screendump('/tmp/siglent.bmp')
+    #res = scope.save_screendump('/tmp/siglent.bmp')
+    #scope.set_channel_coupling(coupling="dc", fiftyohms=False)
+    #scope.set_channel_bandwidth_limit(False)
+    #scope.set_channel_probe_atten()
+    #scope.set_channel_invert(invert=False)
+    #scope.set_channel_skew(0)
+    #scope.set_channel_units('V')
+
+
 
     scope.close()
 

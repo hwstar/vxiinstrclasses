@@ -12,7 +12,7 @@ class dsa815(instrument):
 
     def console(self):
         """Debugging console"""
-        self._console("Siglent SDS2000")
+        self._console("Rigol Dsa815")
 
     def set_span(self, span):
         """Set the frequency span"""

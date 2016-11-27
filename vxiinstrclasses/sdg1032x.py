@@ -18,7 +18,7 @@ class sdg1032x(instrument):
 
     def console(self):
         """Enter debugging console"""
-        self._console("Siglent SDM3055")
+        self._console("Siglent SDG1032X")
 
     def output(self, param, channel=1):
         """Set output parameters"""

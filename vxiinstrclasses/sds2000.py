@@ -26,7 +26,7 @@ class sds2000(instrument):
                     10E0: '10S', 25E0: '25S', 50E0: '50S'
                     }
         if(val not in tdivdict):
-            raise InstrumentError("Invalid time per division")
+            raise InstrumentError("Invalid time per division: "+str(val))
 
         command = 'TDIV {tdiv}'.format(tdiv=tdivdict[val])
 
@@ -42,7 +42,7 @@ class sds2000(instrument):
                     1.0E1:"10V"}
 
         if(val not in vdivdict):
-            raise InstrumentError("Invalid volts per division")
+            raise InstrumentError("Invalid volts per division: "+str(val))
 
         command = "C{chan}:VDIV {vdiv}".format(chan=chan, vdiv=vdivdict[val])
 
@@ -82,7 +82,7 @@ class sds2000(instrument):
             self._write("C{chan}:CPL GND".format(chan=chan))
             return
         else:
-            return
+            raise InstrumentError("Bad coupling value: " + coupling)
 
         # Determine impedance code
         z = "1M"
@@ -107,18 +107,26 @@ class sds2000(instrument):
 
     def set_channel_units(self, units="V", chan=1):
         """ Set the units per vertical division (V or A)"""
-        if(units == 'V' or units == 'A'):
+        if(units == "V" or units == "A"):
             self._write("C{chan}:UNIT {units}".format(chan=chan, units=units))
+        else:
+            raise InstrumentError("Invalid value for units: "+units)
 
 
     def set_trigger_mode(self, mode="auto"):
         """Set trigger mode: auto, norm, single, stop"""
+        validmodes = ["AUTO","NORM","SINGLE","STOP"]
+        if(mode.upper() not in validmodes):
+            raise InstrumentError("Invalid trigger mode: "+mode)
         command = 'TRMD' + ' ' + mode.upper()
         self._write(command)
 
 
-    def set_trigger_slope(self, slope, chan=1):
+    def set_trigger_slope(self, slope="pos", chan=1):
         """Set the trigger slope"""
+        validslopes = ["NEG","POS","WINDOW"]
+        if (slope.upper() not in validslopes):
+            raise InstrumentError("Invalid trigger slope: " + slope)
         command = 'C%s:TRSL %s' % (chan, slope.upper())
         self._write(command)
 
@@ -161,6 +169,8 @@ if __name__ == "__main__":
     #scope.set_channel_units('V')
     scope.set_channel_volts_perdiv(1E-0)
     scope.set_time_perdiv(10E-6)
+    scope.set_trigger_slope("pos")
+    scope.set_trigger_mode("auto")
 
 
     scope.close()

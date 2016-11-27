@@ -13,113 +13,41 @@ class sds2000(instrument):
 
     def set_time_perdiv(self, val=1E-3):
         """Sets the time per division"""
-        if (val <= 1.0E-9):
-            timediv = '1.0NS'
-        elif (val <= 2.5E-9):
-            timediv = '2.5NS'
-        elif (val <= 5.0E-9):
-            timediv = '5NS'
-        elif (val <= 10.0E-9):
-            timediv = '10NS'
-        elif (val <= 25.0E-9):
-            timediv = '25NS'
-        elif (val <= 50.0E-9):
-            timediv = '50NS'
-        elif (val <= 100.0E-9):
-            timediv = '100NS'
-        elif (val <= 250.0E-9):
-            timediv = '250NS'
-        elif (val <= 500.0E-9):
-            timediv = '500NS'
+        tdivdict = {1.0E-9:"1.0NS",2.5E-9:"2.5NS", 5.0E-9:"5.0NS",
+                    10E-9: '10NS',25E-9:'25NS',50E-9: '50NS',
+                    1000E-9: '100NS', 250E-9: '250NS', 500E-9: '500NS',
+                    1.0E-6: "1.0US", 2.5E-6: "2.5US", 5.0E-6: "5.0US",
+                    10E-6: '10US', 25E-6: '25US', 50E-6: '50US',
+                    1000E-6: '100US', 250E-6: '250US', 500E-6: '500US',
+                    1.0E-3: "1.0MS", 2.5E-3: "2.5MS", 5.0E-3: "5.0MS",
+                    10E-3: '10MS', 25E-3: '25MS', 50E-3: '50MS',
+                    1000E-3: '100MS', 250E-3: '250MS', 500E-3: '500MS',
+                    1.0E0: "1.0S", 2.5E0: "2.5S", 5.0E0: "5.0S",
+                    10E0: '10S', 25E0: '25S', 50E0: '50S'
+                    }
+        if(val not in tdivdict):
+            raise InstrumentError("Invalid time per division")
 
-        elif (val <= 1.0E-6):
-            timediv = '1US'
-        elif (val <= 2.5E-6):
-            timediv = '2.5US'
-        elif (val <= 5.0E-6):
-            timediv = '5US'
-        elif (val <= 10.0E-6):
-            timediv = '10US'
-        elif (val <= 25.0E-6):
-            timediv = '25US'
-        elif (val <= 50.0E-6):
-            timediv = '50US'
-        elif (val <= 100.0E-6):
-            timediv = '100US'
-        elif (val <= 250.0E-6):
-            timediv = '250US'
-        elif (val <= 500.0E-6):
-            timediv = '500US'
-
-        elif (val <= 1.0E-3):
-            timediv = '1MS'
-        elif (val <= 2.5E-3):
-            timediv = '2.5MS'
-        elif (val <= 5.0E-3):
-            timediv = '5MS'
-        elif (val <= 10.0E-3):
-            timediv = '10MS'
-        elif (val <= 25.0E-3):
-            timediv = '25MS'
-        elif (val <= 50.0E-3):
-            timediv = '50MS'
-        elif (val <= 100.0E-3):
-            timediv = '100MS'
-        elif (val <= 250.0E-3):
-            timediv = '250MS'
-        elif (val <= 500.0E-3):
-            timediv = '500MS'
-
-        elif (val <= 1.0E0):
-            timediv = '1S'
-        elif (val <= 2.0E0):
-            timediv = '2.5S'
-        elif (val <= 5.0E0):
-            timediv = '5S'
-        elif (val <= 10.0E0):
-            timediv = '10S'
-        elif (val >= 25.0E0):
-            timediv = '25S'
-        else:
-            timediv = '50S'
-
-        command = 'TDIV %s' % (timediv)
+        command = 'TDIV {tdiv}'.format(tdiv=tdivdict[val])
 
         self._write(command)
 
-    def set_channel_volts_perdiv(self, val=2, chan=1):
+    def set_channel_volts_perdiv(self, val=2.0, chan=1):
         """Sets the volts per division on a specific channel"""
-        if (val  <= 1.0E-3):
-            voltDiv = '1MV'
-        elif (val <= 2.0E-3):
-            voltDiv = '2MV'
-        elif (val  <= 5.0E-3):
-            voltDiv = '5MV'
-        elif (val <= 10.0E-3):
-            voltDiv = '10MV'
-        elif (val <= 20.0E-3):
-            voltDiv = '20MV'
-        elif (val <= 50.0E-3):
-            voltDiv = '50MV'
-        elif (val <= 100.0E-3):
-            voltDiv = '100MV'
-        elif (val <= 200.0E-3):
-            voltDiv = '200MV'
-        elif (val <= 500.0E-3):
-            voltDiv = '500MV'
-        elif (val <= 1.0E0):
-            voltDiv = '1V'
-        elif (val <= 2.0E0):
-            voltDiv = '2V'
-        elif (val <= 5.0E0):
-            voltDiv = '5V'
-        else:
-            voltDiv = '10V'
+        # Bug: Can't set 1mV per division.
+        # Note: Scope goes into fine volts per div mode.
+        # Note: voltage is referenced to X1 probes
+        vdivdict = {1.0E-3:"1MV'", 2.0E-3:"2MV", 5.0E-3:"5MV", 10.0E-3:"10MV", 20.0E-3:"20MV", 50E-3:"50MV",
+                    100E-3:"100MV", 200E-3:"200MV", 500E-3:"500MV", 1.0E0:"1V", 2.0E0:"2V", 5.0E0:"5V",
+                    1.0E1:"10V"}
 
+        if(val not in vdivdict):
+            raise InstrumentError("Invalid volts per division")
 
-        command = 'C%s:VDIV %s' % (chan, voltDiv)
+        command = "C{chan}:VDIV {vdiv}".format(chan=chan, vdiv=vdivdict[val])
 
         self._write(command)
+
 
     def set_channel_invert(self, invert=False, math=False, chan=1):
         "Set the channel or math pseudo channel invert true or false"
@@ -130,8 +58,6 @@ class sds2000(instrument):
             self._write("MATH:INVS {state}".format(state=state))
         else:
             self._write("C{chan}:INVS {state}".format(chan=chan, state=state))
-
-
 
 
     def set_channel_probe_atten(self, atten=10, chan=1):
@@ -229,11 +155,12 @@ if __name__ == "__main__":
     #res = scope.save_screendump('/tmp/siglent.bmp')
     #scope.set_channel_coupling(coupling="dc", fiftyohms=False)
     #scope.set_channel_bandwidth_limit(False)
-    #scope.set_channel_probe_atten()
+    scope.set_channel_probe_atten(1)
     #scope.set_channel_invert(invert=False)
     #scope.set_channel_skew(0)
     #scope.set_channel_units('V')
-
+    scope.set_channel_volts_perdiv(1E-0)
+    scope.set_time_perdiv(10E-6)
 
 
     scope.close()

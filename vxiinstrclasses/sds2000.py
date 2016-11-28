@@ -5,6 +5,7 @@ class sds2000(instrument):
     def __init__(self, resourcehost):
 
         instrument.__init__(self, resourcehost)
+        self.externaltrigsources=["C1","C2","C3","C4","EX","EX5","LINE"]
 
         iid = self.identify()
         if(iid[5:17] != "SIGLENT,SDS2"):
@@ -122,14 +123,49 @@ class sds2000(instrument):
         self._write(command)
 
 
-    def set_trigger_slope(self, slope="pos", chan=1):
+    def set_trigger_slope(self, tsource, slope="pos",):
         """Set the trigger slope"""
         validslopes = ["NEG","POS","WINDOW"]
+
+        if (tsource == None):
+            tsource = 1
+        if (isinstance(tsource, int)):
+            stsource = "C" + str(tsource)
+        elif (isinstance(tsource, str)):
+            stsource = tsource.upper()
+        else:
+            raise (InstrumentError, "Invalid type for trigger source")
+
+        if (stsource not in self.externaltrigsources):
+            raise InstrumentError("Invalid trigger source " + stsource)
+
+
         if (slope.upper() not in validslopes):
             raise InstrumentError("Invalid trigger slope: " + slope)
-        command = 'C%s:TRSL %s' % (chan, slope.upper())
+        command = '{stsource}:TRSL {slope}'.format(stsource=stsource, slope=slope.upper())
         self._write(command)
 
+
+    def set_trigger_coupling(self, tsource, mode="dc"):
+        """Set trigger coupling"""
+
+        if(tsource == None):
+            tsource = 1
+        if(isinstance(tsource, int)):
+            stsource = "C"+str(tsource)
+        elif(isinstance(tsource, str)):
+            stsource = tsource.upper()
+        else:
+            raise(InstrumentError,"Invalid type for trigger source")
+
+        if(stsource not in self.externaltrigsources):
+            raise InstrumentError("Invalid trigger source "+stsource)
+
+        validmodes = ["AC", "DC", "HFREJ", "LFREJ"]
+        if(mode.upper() not in validmodes):
+            raise InstrumentError("Invalid trigger mode: "+str(mode))
+
+        self._write("{tsource}:TRCP {mode}".format(tsource=stsource, mode=str(mode).upper()))
 
 
     def get_trigger_level(self):
@@ -144,6 +180,7 @@ class sds2000(instrument):
         """Set the trigger level in volts"""
         command= 'C%s:TRLV %1.3fV' % (chan, level)
         self._write(command)
+
 
     def save_screendump(self, file):
         """Save a screendump to a file. Screendump file is in .bmp format"""
@@ -163,14 +200,15 @@ if __name__ == "__main__":
     #res = scope.save_screendump('/tmp/siglent.bmp')
     #scope.set_channel_coupling(coupling="dc", fiftyohms=False)
     #scope.set_channel_bandwidth_limit(False)
-    scope.set_channel_probe_atten(1)
+    #scope.set_channel_probe_atten(1)
     #scope.set_channel_invert(invert=False)
     #scope.set_channel_skew(0)
     #scope.set_channel_units('V')
-    scope.set_channel_volts_perdiv(1E-0)
-    scope.set_time_perdiv(10E-6)
-    scope.set_trigger_slope("pos")
-    scope.set_trigger_mode("auto")
+    #scope.set_channel_volts_perdiv(1E-0)
+    #scope.set_time_perdiv(10E-6)
+    #scope.set_trigger_slope(1, slope="pos")
+    #scope.set_trigger_mode("auto")
+    #scope.set_trigger_coupling(1,mode="dc")
 
 
     scope.close()

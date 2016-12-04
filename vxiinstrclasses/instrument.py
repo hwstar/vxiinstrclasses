@@ -52,7 +52,7 @@ class instrument():
             self._debug_print(message, 'Asking:')
         res = self.s.ask(message)
         if(self._debug_flag):
-            self._debug_print(message, 'Ask return:')
+            self._debug_print(res, 'Ask return:')
         return res
 
     def _ask_read_raw(self, message, len=-1):

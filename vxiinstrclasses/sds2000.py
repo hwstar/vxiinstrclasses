@@ -6,10 +6,54 @@ class sds2000(instrument):
 
         instrument.__init__(self, resourcehost)
         self.externaltrigsources=["C1","C2","C3","C4","EX","EX5","LINE"]
+        self.tracelist = ["C1", "C2", "C3", "C4", "TA", "TB", "TC", "TD"]
+        self.channellist = ["C1","C2","C3","C4"]
+        self.memory_sizes = {7000:"7K", 14000:"14K", 70000:"70K", 140000:"140K", 700000:"700K", 1400000:"1.4M",
+                             7000000:"7M", 14000000:"14M"}
 
         iid = self.identify()
         if(iid[5:17] != "SIGLENT,SDS2"):
             raise InstrumentError("Instrument Manufacturer/Model Number Mismatch, "+iid)
+
+    def lock(self, state=False):
+        "Lock or unlock the scope front panel"
+
+        sw = 'OFF'
+        if (state):
+            sw = 'ON'
+
+        self._write("LOCK {sw}".format( sw=sw))
+
+    def get_sample_status(self):
+        " Get the scope's sample status"
+        res = self._ask("SAST?")
+        return res.split(' ')[1]
+
+    def set_memory_depth(self, size=14000):
+        "Set scope memory depth"
+        if(size not in self.memory_sizes):
+            raise InstrumentError("Invalid Memory Size")
+        self._write("MSIZ {size}".format(size=self.memory_sizes[size]))
+
+
+    def get_sample_rate(self):
+        " Get the scope's sample status"
+        res = self._ask("SARA?")
+        return res.split(' ')[1]
+
+
+    def set_trace_visibility(self, trace=1, state=True):
+        """Turn a trace on or off"""
+        index = int(trace - 1)
+
+        if( index < 0 or index >= len(self.tracelist)):
+            raise InstrumentError("Invalid trace index")
+
+        sw = 'OFF'
+        if(state):
+            sw = 'ON'
+
+        self._write("{tracecode}:TRA {sw}".format(tracecode=self.tracelist[index], sw=sw))
 
 
     def set_time_perdiv(self, val=1E-3):
@@ -32,6 +76,24 @@ class sds2000(instrument):
         command = 'TDIV {tdiv}'.format(tdiv=tdivdict[val])
 
         self._write(command)
+
+    def set_channel_offset(self, offset=0.0, channel=1):
+        "Set the offset for a scope channel"
+        if (channel < 1 or channel > 4):
+            raise InstrumentError("Invalid channel number")
+        res = self._write("{0}:OFST {1:.3f}V".format(self.channellist[channel - 1], offset))
+        pass
+
+
+    def get_channel_sample_points(self, channel=1):
+        """Return the number of sampled points for a channel"""
+        if(channel < 1 or channel > 4):
+            raise InstrumentError("Invalid channel number")
+        res = self._ask("SANU? {chid}".format(chid=self.channellist[channel - 1]))
+        return res.split(" ")[1]
+
+
+
 
     def set_channel_volts_perdiv(self, val=2.0, chan=1):
         """Sets the volts per division on a specific channel"""
@@ -65,7 +127,7 @@ class sds2000(instrument):
         """ Set the probe attenuation"""
         #Broken: Bug in Siglent firmware. Can only set 0.1, 0.2, 0,5, 1,2,5 and 10 yet others selectable from scope UI.
         if atten not in [0.1,0.2,0.5,1,2,5,10,20,50,100,200,500,1000,2000,5000,10000]:
-            return
+            raise InstrumentError("Invalid probe attenuation value")
         self._write("C{chan}:ATTN {atten}".format(chan=chan, atten=atten))
 
 
@@ -122,6 +184,9 @@ class sds2000(instrument):
         command = 'TRMD' + ' ' + mode.upper()
         self._write(command)
 
+    def arm_trigger(self):
+        """ Arm the trigger for a single acquisition"""
+        self._write("ARM")
 
     def set_trigger_slope(self, tsource, slope="pos",):
         """Set the trigger slope"""
@@ -195,6 +260,8 @@ class sds2000(instrument):
 if __name__ == "__main__":
     scope = sds2000("sds2000")
     scope.debug(True)
+    scope.set_memory_depth(7000)
+    scope.set_channel_offset(0.0)
     #print(scope.identify())
     #scope.console()
     #res = scope.save_screendump('/tmp/siglent.bmp')
@@ -209,6 +276,8 @@ if __name__ == "__main__":
     #scope.set_trigger_slope(1, slope="pos")
     #scope.set_trigger_mode("auto")
     #scope.set_trigger_coupling(1,mode="dc")
+    scope.set_trace_visibility(1,True)
+    scope.arm_trigger()
 
 
     scope.close()

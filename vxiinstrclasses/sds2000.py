@@ -247,12 +247,46 @@ class sds2000(instrument):
         self._write(command)
 
 
-    def save_screendump(self, file):
+    def save_screendump(self, filename):
         """Save a screendump to a file. Screendump file is in .bmp format"""
-        f = open(file, "wb")
+        f = open(filename, "wb")
         res = self._ask_read_raw('SCDP')
         f.write(res)
         f.close()
+
+
+    def raw_wf_data(self, channel=1):
+        """ Return an array containing the raw waveform data """
+        if (channel < 1 or channel > 4):
+            raise InstrumentError("Invalid channel number")
+        res = self._ask_read_raw('C{channel}: WF?'.format(channel=int(channel)))
+        return res
+
+    def raw_wf_template(self):
+        """ Return template info as text """
+        res = self._ask('TMPL?')
+
+    def raw_wf_setup(self, sparsing=None, numberofpoints=None, firstpoint=None):
+        """Raw waveform setup"""
+        option = False
+        cstr = 'WFSU '
+        if(sparsing is not None):
+            cstr = cstr + "SP,{sparsing}".format(sparsing=int(sparsing))
+            option = True
+        if(numberofpoints is not None):
+            if(option):
+                cstr = cstr + ','
+            cstr = cstr + "NP,{numberofpoints}".format(numberofpoints=int(numberofpoints))
+            option = True
+        if(firstpoint is not None):
+            if(option):
+                cstr = cstr + ','
+            cstr = cstr + "FP,{firstpoint}".format(firstpoint=int(firstpoint))
+        self._write(cstr)
+
+
+
+
 
     def console(self):
         self._console("Siglent SDS2000")
@@ -278,6 +312,12 @@ if __name__ == "__main__":
     #scope.set_trigger_coupling(1,mode="dc")
     scope.set_trace_visibility(1,True)
     scope.arm_trigger()
+
+    scope.raw_wf_setup(numberofpoints = 16)
+    scopedata = scope.raw_wf_data(channel=1)
+    f = open("scopedata", "wb")
+    f.write(scopedata)
+    f.close()
 
 
     scope.close()

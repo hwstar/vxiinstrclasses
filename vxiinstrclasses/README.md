@@ -5,12 +5,12 @@ and is designed to be easily extended to other pieces of test equipment using cl
 
 ##Supported test equipment
 
--Rigol DSA815 Spectrum Analyzer
--Rigol DP832 Power Supply
--Siglent SDG1032X Arbitrary Waveform Generator
--Siglent SDM3055 5 1/2 digit DMM
--Siglent SDS2000 300 MHz 4 Channel Oscilloscope
--Maynuo M9812 Electronic Load
+Rigol DSA815 Spectrum Analyzer
+Rigol DP832 Power Supply
+Siglent SDG1032X Arbitrary Waveform Generator
+Siglent SDM3055 5 1/2 digit DMM
+Siglent SDS2000 300 MHz 4 Channel Oscilloscope
+Maynuo M9812 Electronic Load
 
 vxi11 is a install prerequisite for this project. It can be found [here](https://github.com/python-ivi/python-vxi11).
 

@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='vxiinstrclasses',
-    version='0.2',
+    version='0.3',
     packages=['vxiinstrclasses'],
     url='rodgers619.com',
     license='GPL v. 3',

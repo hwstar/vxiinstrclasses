@@ -103,6 +103,7 @@ class sdg1032x(instrument):
         sstr = "C{channel}:ARWV INDEX,{index}".format(channel=channel, index=index)
         self._write(sstr)
 
+
     def wave_get_builtin(self):
         """Return a dict with built-in wave names and indexes"""
         sstr = "STL? BUILDIN"
@@ -209,7 +210,11 @@ class sdg1032x(instrument):
             adict['WAVEDATA'] = wavedata
         return adict
 
-
+    def channel_combine(self, ena_dis=True, channel=1):
+        """Combine waveforms"""
+        state = 'ON' if ena_dis is True else 'OFF'
+        sstr = 'C{}:CoMBiNe {}'.format(channel, state)
+        self._write(sstr)
 
 
 
